@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cupertino_icons/cupertino_icons.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:io';
+import './upload_screen.dart';
 
 class Resultpage extends StatelessWidget {
   const Resultpage({super.key, required this.audio});
@@ -28,12 +28,6 @@ class ResultWidgetStateDefault extends State<Resultwidget> {
   AudioPlayer? _player;
   bool isplaying = false;
 
-  @override
-  void dispose() {
-    _player?.dispose();
-    super.dispose();
-  }
-
   void _playbutton() {
     if(_player == null) {
       _player = AudioPlayer();
@@ -41,7 +35,7 @@ class ResultWidgetStateDefault extends State<Resultwidget> {
       _player!.play(DeviceFileSource(widget.audio.path));
     } else {
       if(isplaying) {
-      _player!.pause();
+        _player!.pause();
       } else {
         _player!.resume();
       }
@@ -59,14 +53,26 @@ class ResultWidgetStateDefault extends State<Resultwidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
-              "원하는 노래를 업로드하고, 목소리를 골라주세요",
-              style: TextStyle(fontSize: 15),
+              "변환된 노래에요",
+              style: TextStyle(fontSize: 20),
             ),
             CupertinoButton(
               onPressed: _playbutton,
               child: Icon(
                 isplaying ? CupertinoIcons.pause : CupertinoIcons.play,
-                size: 30
+                size: 40
+              )
+            ),
+            CupertinoButton(
+              onPressed: () {
+                if(isplaying){
+                  _player?.stop();
+                }
+                Navigator.of(context).pushAndRemoveUntil(CupertinoPageRoute(builder: (context) => const Uploadpage()), (Route<dynamic> route) => false);
+              },
+              child: const Text(
+                "한번 더 하기!",
+                style: TextStyle(fontSize: 20),
               )
             )
           ]

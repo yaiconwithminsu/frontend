@@ -1,12 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart';
 import './result_screen.dart';
+import 'package:path_provider/path_provider.dart';
 
 enum Name {minsu, san, juui, yeongun, yunseo, jimin}
 
-var url = 'http://10.0.2.2:8000';
+var url = 'http://10.0.2.2:8000/minsu/';
 
 Map<Name, Color> namecolors = <Name, Color>{
   Name.minsu: const Color(0xff191970),
@@ -197,66 +198,58 @@ Future<File?> pickfile() async {
 Future<int?> postFile(File file, Name name) async {
   int? id;
   debugPrint(nameString[name]);
-  FormData formData = FormData.fromMap({
-    'file': file,
-    'name': nameString[name],
-  });
-
-  var dio = Dio();
+  var client = Client();
   try {
-    debugPrint('posting data');
-    var response = await dio.post(
-      url,
-      data: formData,
-    );
-    debugPrint(response.data.toString());
-    if (response.statusCode == 200) {
-      id = response.data;
-    } else {
-      debugPrint('response is not 200');
-    }
-  } catch (err) {
-    // error occured
-    debugPrint('error');
-  } finally {
-    dio.close();
-  }
+      MultipartRequest request = MultipartRequest('POST', Uri.parse(url));
+      request.fields['name'] = nameString[name]!;
+      
+      //요청에 이미지 파일 추가
+      request.files.add(await MultipartFile.fromPath('audio', file.path));
+      var response = await request.send();
+      
+      if (response.statusCode == 200) {
+        debugPrint('getting response');
+        final body = await response.stream.bytesToString();
+        debugPrint(body);
+        // jsonBody를 바탕으로 data 핸들링
 
+        id = int.parse(body);
+      }
+    } catch (e) {
+      Exception(e);
+    } finally {
+      client.close();
+    }
   return id;
 }
 
 Future<File?> downloadFile(int id) async {
-  debugPrint('checking server side action is done');
   bool waiting = true;
-  var dio = Dio();
-  while(waiting) {
-    try {
-      debugPrint('getting status');
-      var response = await dio.get(
-        url,
-        queryParameters: {'id': id},
-      );
-      debugPrint(response.data.toString());
-      waiting = response.data; // false if work is done
-    } catch (err) {
-      // error occured
-      debugPrint('error while checking status');
-    }
-  }
   File? ret;
 
-  try {
-    var response = await dio.get(
-      url,
-      queryParameters: {'id': - id},
-    );
-    ret = File(response.data);
-    debugPrint('download done!');
-  } catch(err) {
-    debugPrint('error while downloading converted file');
+  while(waiting){
+    try {
+      await Future.delayed(const Duration(seconds: 2));
+      debugPrint('checking server side action');
+      Response response = await get(Uri.parse('$url?id=$id'));
+      final body = response.body;
+      debugPrint(body);
+      waiting = body == 'False';
+    } catch (e) {
+      Exception(e);
+    }
   }
 
-  dio.close();
+  // try {
+    debugPrint('downloading converted audio');
+    Response response = await get(Uri.parse('$url?id=-$id'));
+    Directory tempDir = await getTemporaryDirectory();
+    ret = await File('${tempDir.path}/audio.wav').writeAsBytes(response.bodyBytes);
+    debugPrint('downloading done');
+  // } catch (e) {
+  //   debugPrint('error while downloading audio');
+  //   Exception(e);
+  // }
 
   return ret;
 }
