@@ -240,16 +240,16 @@ Future<File?> downloadFile(int id) async {
     }
   }
 
-  // try {
+  try {
     debugPrint('downloading converted audio');
     Response response = await get(Uri.parse('$url?id=-$id'));
     Directory tempDir = await getTemporaryDirectory();
     ret = await File('${tempDir.path}/audio.wav').writeAsBytes(response.bodyBytes);
     debugPrint('downloading done');
-  // } catch (e) {
-  //   debugPrint('error while downloading audio');
-  //   Exception(e);
-  // }
+  } catch (e) {
+    debugPrint('error while downloading audio');
+    Exception(e);
+  }
 
   return ret;
 }
