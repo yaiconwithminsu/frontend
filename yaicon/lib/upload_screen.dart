@@ -2,8 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
+import './result_screen.dart';
 
 enum Name {minsu, san, juui, yeongun, yunseo, jimin}
+
+var url = 'http://10.0.2.2:8000';
 
 Map<Name, Color> namecolors = <Name, Color>{
   Name.minsu: const Color(0xff191970),
@@ -43,9 +46,10 @@ class Uploadwidget extends StatefulWidget {
 }
 
 class UploadWidgetStateDefault extends State<Uploadwidget> {
-  bool connecting = false;
+  int? id;
   Name _selectedSegment = Name.minsu;
   File? audiofile;
+  File? receivedfile;
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +135,27 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
             ),
             CupertinoButton.filled(
               onPressed: audiofile == null ? null :  () async {
-                connecting = await postFile(audiofile!, _selectedSegment);
+                // from here
+                // if (!mounted) return;
+                // Navigator.push(
+                //   context,
+                //   CupertinoPageRoute(builder: (context) => Resultpage(audio: audiofile!))
+                // );
+                // return;
+                // to here is test code
+                id = await postFile(audiofile!, _selectedSegment);
                 setState(() {});
+                if(id == null) return;
+                receivedfile = await downloadFile(id!);
+                id = null;
+                setState(() {});
+                if(receivedfile != null){
+                  if (!mounted) return;
+                  Navigator.push(
+                    context,
+                    CupertinoPageRoute(builder: (context) => Resultpage(audio: receivedfile!))
+                  );
+                }
               },
               child: const Text('업로드'),
             ),
@@ -140,7 +163,7 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
               width: 15,
               height: 15,
             ),
-            connecting ? const CupertinoActivityIndicator(
+            id != null ? const CupertinoActivityIndicator(
               radius: 15.0,
               color: CupertinoColors.activeBlue
             ) : const SizedBox(
@@ -171,9 +194,8 @@ Future<File?> pickfile() async {
   }
 }
 
-Future<bool> postFile(File file, Name name) async {
-  var url = 'http://10.0.2.2:8000';
-
+Future<int?> postFile(File file, Name name) async {
+  int? id;
   debugPrint(nameString[name]);
   FormData formData = FormData.fromMap({
     'file': file,
@@ -188,10 +210,53 @@ Future<bool> postFile(File file, Name name) async {
       data: formData,
     );
     debugPrint(response.data.toString());
-    return true;
+    if (response.statusCode == 200) {
+      id = response.data;
+    } else {
+      debugPrint('response is not 200');
+    }
   } catch (err) {
     // error occured
     debugPrint('error');
-    return false;
+  } finally {
+    dio.close();
   }
+
+  return id;
+}
+
+Future<File?> downloadFile(int id) async {
+  debugPrint('checking server side action is done');
+  bool waiting = true;
+  var dio = Dio();
+  while(waiting) {
+    try {
+      debugPrint('getting status');
+      var response = await dio.get(
+        url,
+        queryParameters: {'id': id},
+      );
+      debugPrint(response.data.toString());
+      waiting = response.data; // false if work is done
+    } catch (err) {
+      // error occured
+      debugPrint('error while checking status');
+    }
+  }
+  File? ret;
+
+  try {
+    var response = await dio.get(
+      url,
+      queryParameters: {'id': - id},
+    );
+    ret = File(response.data);
+    debugPrint('download done!');
+  } catch(err) {
+    debugPrint('error while downloading converted file');
+  }
+
+  dio.close();
+
+  return ret;
 }
