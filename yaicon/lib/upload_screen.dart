@@ -5,26 +5,18 @@ import 'package:http/http.dart';
 import './result_screen.dart';
 import 'package:path_provider/path_provider.dart';
 
-enum Name {minsu, san, juui, yeongun, yunseo, jimin}
+enum Name {minsu, chim}
 
-var url = 'http://10.0.2.2:8000/minsu/';
+var url = 'http://165.132.46.80:32304/minsu/';
 
 Map<Name, Color> namecolors = <Name, Color>{
   Name.minsu: const Color(0xff191970),
-  Name.san: const Color(0xff40826d),
-  Name.juui: const Color(0xffebb563),
-  Name.yeongun: const Color(0xff007ba7),
-  Name.yunseo: const Color(0xffeb7f63),
-  Name.jimin: const Color(0xfff27d68),
+  Name.chim: const Color(0xffebb563),
 };
 
 Map<Name, String> nameString = <Name, String>{
   Name.minsu: '민수',
-  Name.san: '산',
-  Name.juui: '주의',
-  Name.yeongun: '영운',
-  Name.yunseo: '윤서',
-  Name.jimin: '지민',
+  Name.chim: '침착맨'
 };
 
 class Uploadpage extends StatelessWidget {
@@ -93,38 +85,10 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
                     style: TextStyle(color: CupertinoColors.white),
                   ),
                 ),
-                Name.san: Padding(
+                Name.chim: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
-                    '산',
-                    style: TextStyle(color: CupertinoColors.white),
-                  ),
-                ),
-                Name.juui: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    '주의',
-                    style: TextStyle(color: CupertinoColors.white),
-                  ),
-                ),
-                Name.yeongun: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    '영운',
-                    style: TextStyle(color: CupertinoColors.white),
-                  ),
-                ),
-                Name.yunseo: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    '윤서',
-                    style: TextStyle(color: CupertinoColors.white),
-                  ),
-                ),
-                Name.jimin: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    '지민',
+                    '침착맨',
                     style: TextStyle(color: CupertinoColors.white),
                   ),
                 ),
