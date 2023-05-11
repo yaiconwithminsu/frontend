@@ -1,11 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'dart:io';
 import './upload_screen.dart';
 
 class Resultpage extends StatelessWidget {
   const Resultpage({super.key, required this.audio});
-  final File audio;
+  final int audio;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +17,7 @@ class Resultpage extends StatelessWidget {
 
 class Resultwidget extends StatefulWidget {
   const Resultwidget({super.key, required this.audio});
-  final File audio;
+  final int audio;
 
   @override
   State<Resultwidget> createState() => ResultWidgetStateDefault();
@@ -31,8 +30,9 @@ class ResultWidgetStateDefault extends State<Resultwidget> {
   void _playbutton() {
     if(_player == null) {
       _player = AudioPlayer();
-      debugPrint(widget.audio.path);
-      _player!.play(DeviceFileSource(widget.audio.path));
+      debugPrint("${widget.audio}");
+      _player!.play(UrlSource("http://165.132.46.80:31270/minsu/?id=-${widget.audio}"));
+      _player!.resume();
     } else {
       if(isplaying) {
         _player!.pause();

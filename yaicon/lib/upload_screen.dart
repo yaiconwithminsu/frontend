@@ -1,13 +1,11 @@
 import 'package:flutter/cupertino.dart';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart';
 import './result_screen.dart';
-import 'package:path_provider/path_provider.dart';
 
 enum Name {minsu, chim}
 
-var url = 'http://165.132.46.80:32304/minsu/';
+var url = 'http://165.132.46.80:31270/minsu/';
 
 Map<Name, Color> namecolors = <Name, Color>{
   Name.minsu: const Color(0xff191970),
@@ -41,8 +39,8 @@ class Uploadwidget extends StatefulWidget {
 class UploadWidgetStateDefault extends State<Uploadwidget> {
   int? id;
   Name _selectedSegment = Name.minsu;
-  File? audiofile;
-  File? receivedfile;
+  PlatformFile? audiofile;
+  bool? received;
 
   @override
   Widget build(BuildContext context) {
@@ -109,16 +107,17 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
                 // return;
                 // to here is test code
                 id = await postFile(audiofile!, _selectedSegment);
+                var tmpid = id;
                 setState(() {});
                 if(id == null) return;
-                receivedfile = await downloadFile(id!);
+                received = await downloadFile(id!);
                 id = null;
                 setState(() {});
-                if(receivedfile != null){
+                if(received != null){
                   if (!mounted) return;
                   Navigator.push(
                     context,
-                    CupertinoPageRoute(builder: (context) => Resultpage(audio: receivedfile!))
+                    CupertinoPageRoute(builder: (context) => Resultpage(audio: tmpid!))
                   );
                 }
               },
@@ -142,16 +141,16 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
   }
 }
 
-Future<File?> pickfile() async {
+Future<PlatformFile?> pickfile() async {
   debugPrint('file picker started');
   FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio);
   if (result != null) {
     // User picked the file
 
     debugPrint('picked');
-    debugPrint(result.files.single.path!);
+    // debugPrint(result.files.single.path!);
 
-    return File(result.files.single.path!);
+    return result.files.single;
   } else {
     // User canceled the picker
     debugPrint('canceled');
@@ -159,16 +158,15 @@ Future<File?> pickfile() async {
   }
 }
 
-Future<int?> postFile(File file, Name name) async {
+Future<int?> postFile(PlatformFile file, Name name) async {
   int? id;
   debugPrint(nameString[name]);
-  var client = Client();
   try {
       MultipartRequest request = MultipartRequest('POST', Uri.parse(url));
       request.fields['name'] = nameString[name]!;
       
       //요청에 이미지 파일 추가
-      request.files.add(await MultipartFile.fromPath('audio', file.path));
+      request.files.add(MultipartFile.fromBytes('audio', file.bytes!, filename: file.name));
       var response = await request.send();
       
       if (response.statusCode == 200) {
@@ -182,14 +180,14 @@ Future<int?> postFile(File file, Name name) async {
     } catch (e) {
       Exception(e);
     } finally {
-      client.close();
+      
     }
   return id;
 }
 
-Future<File?> downloadFile(int id) async {
+Future<bool?> downloadFile(int id) async {
   bool waiting = true;
-  File? ret;
+  // Uint8List? ret;
 
   while(waiting){
     try {
@@ -201,19 +199,20 @@ Future<File?> downloadFile(int id) async {
       waiting = body == 'False';
     } catch (e) {
       Exception(e);
+      return null;
     }
   }
 
-  try {
-    debugPrint('downloading converted audio');
-    Response response = await get(Uri.parse('$url?id=-$id'));
-    Directory tempDir = await getTemporaryDirectory();
-    ret = await File('${tempDir.path}/audio.wav').writeAsBytes(response.bodyBytes);
-    debugPrint('downloading done');
-  } catch (e) {
-    debugPrint('error while downloading audio');
-    Exception(e);
-  }
+  return true;
+  // try {
+  //   debugPrint('downloading converted audio');
+  //   Response response = await get(Uri.parse('$url?id=-$id'));
+  //   ret = response.bodyBytes;
+  //   debugPrint('downloading done');
+  // } catch (e) {
+  //   debugPrint('error while downloading audio');
+  //   Exception(e);
+  // }
 
-  return ret;
+  // return ret;
 }

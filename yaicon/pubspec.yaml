@@ -40,6 +40,8 @@ dependencies:
   audioplayers: ^4.0.1
   http: ^0.13.6
   path_provider: ^2.0.14
+  http_parser: ^4.0.2
+  universal_io: ^2.2.0
 
 dev_dependencies:
   flutter_test:
