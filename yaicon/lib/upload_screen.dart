@@ -7,8 +7,6 @@ import 'package:path_provider/path_provider.dart';
 
 enum Name {minsu, chim}
 
-var url = 'http://165.132.46.80:32304/minsu/';
-
 Map<Name, Color> namecolors = <Name, Color>{
   Name.minsu: const Color(0xff191970),
   Name.chim: const Color(0xffebb563),
@@ -43,6 +41,20 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
   Name _selectedSegment = Name.minsu;
   File? audiofile;
   File? receivedfile;
+
+  late TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(text: '');
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +93,7 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
                 Name.minsu: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
-                    '민수',
+                    '노래민수',
                     style: TextStyle(color: CupertinoColors.white),
                   ),
                 ),
@@ -98,8 +110,25 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
               width: 30,
               height: 30,
             ),
+            const Text('포트 번호 입력'),
+            SizedBox(
+              width: 120,
+              height: 40,
+              child: CupertinoTextField(
+                controller: _textController,
+                keyboardType: TextInputType.number,
+                placeholder: 'port',
+                onChanged: (text){
+                  setState(() {});
+                },
+              )
+            ),
+            const SizedBox(
+              width: 30,
+              height: 30,
+            ),
             CupertinoButton.filled(
-              onPressed: audiofile == null ? null :  () async {
+              onPressed: (audiofile == null) || (_textController.text == '') ? null :  () async {
                 // from here
                 // if (!mounted) return;
                 // Navigator.push(
@@ -108,10 +137,10 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
                 // );
                 // return;
                 // to here is test code
-                id = await postFile(audiofile!, _selectedSegment);
+                id = await postFile(audiofile!, _selectedSegment, int.parse(_textController.text));
                 setState(() {});
                 if(id == null) return;
-                receivedfile = await downloadFile(id!);
+                receivedfile = await downloadFile(id!, int.parse(_textController.text));
                 id = null;
                 setState(() {});
                 if(receivedfile != null){
@@ -159,9 +188,10 @@ Future<File?> pickfile() async {
   }
 }
 
-Future<int?> postFile(File file, Name name) async {
+Future<int?> postFile(File file, Name name, int port) async {
   int? id;
   debugPrint(nameString[name]);
+  var url = 'http://165.132.46.80:${port}/minsu/';
   var client = Client();
   try {
       MultipartRequest request = MultipartRequest('POST', Uri.parse(url));
@@ -187,9 +217,10 @@ Future<int?> postFile(File file, Name name) async {
   return id;
 }
 
-Future<File?> downloadFile(int id) async {
+Future<File?> downloadFile(int id, int port) async {
   bool waiting = true;
   File? ret;
+  var url = 'http://165.132.46.80:${port}/minsu/';
 
   while(waiting){
     try {
