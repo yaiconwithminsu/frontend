@@ -3,21 +3,23 @@ import 'package:audioplayers/audioplayers.dart';
 import './upload_screen.dart';
 
 class Resultpage extends StatelessWidget {
-  const Resultpage({super.key, required this.audio});
+  const Resultpage({super.key, required this.audio, required this.port});
   final int audio;
+  final int port;
 
   @override
   Widget build(BuildContext context) {
     return CupertinoApp(
       theme: const CupertinoThemeData(brightness: Brightness.light),
-      home: Resultwidget(audio: audio),
+      home: Resultwidget(audio: audio, port: port),
     );
   }
 }
 
 class Resultwidget extends StatefulWidget {
-  const Resultwidget({super.key, required this.audio});
+  const Resultwidget({super.key, required this.audio, required this.port});
   final int audio;
+  final int port;
 
   @override
   State<Resultwidget> createState() => ResultWidgetStateDefault();
@@ -31,7 +33,7 @@ class ResultWidgetStateDefault extends State<Resultwidget> {
     if(_player == null) {
       _player = AudioPlayer();
       debugPrint("${widget.audio}");
-      _player!.play(UrlSource("http://165.132.46.80:31270/minsu/?id=-${widget.audio}"));
+      _player!.play(UrlSource("http://165.132.46.80:${widget.port}/minsu/?id=-${widget.audio}"));
       _player!.resume();
     } else {
       if(isplaying) {

@@ -5,8 +5,6 @@ import './result_screen.dart';
 
 enum Name {minsu, chim}
 
-var url = 'http://165.132.46.80:31270/minsu/';
-
 Map<Name, Color> namecolors = <Name, Color>{
   Name.minsu: const Color(0xff191970),
   Name.chim: const Color(0xffebb563),
@@ -41,6 +39,19 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
   Name _selectedSegment = Name.minsu;
   PlatformFile? audiofile;
   bool? received;
+  late TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(text: '');
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +107,25 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
               width: 30,
               height: 30,
             ),
+            const Text('포트 번호 입력'),
+            SizedBox(
+              width: 120,
+              height: 40,
+              child: CupertinoTextField(
+                controller: _textController,
+                keyboardType: TextInputType.number,
+                placeholder: 'port',
+                onChanged: (text){
+                  setState(() {});
+                },
+              )
+            ),
+            const SizedBox(
+              width: 30,
+              height: 30,
+            ),
             CupertinoButton.filled(
-              onPressed: audiofile == null ? null :  () async {
+              onPressed: (audiofile == null) || (_textController.text == '') ? null :  () async {
                 // from here
                 // if (!mounted) return;
                 // Navigator.push(
@@ -106,18 +134,18 @@ class UploadWidgetStateDefault extends State<Uploadwidget> {
                 // );
                 // return;
                 // to here is test code
-                id = await postFile(audiofile!, _selectedSegment);
+                id = await postFile(audiofile!, _selectedSegment, int.parse(_textController.text));
                 var tmpid = id;
                 setState(() {});
                 if(id == null) return;
-                received = await downloadFile(id!);
+                received = await downloadFile(id!, int.parse(_textController.text));
                 id = null;
                 setState(() {});
                 if(received != null){
                   if (!mounted) return;
                   Navigator.push(
                     context,
-                    CupertinoPageRoute(builder: (context) => Resultpage(audio: tmpid!))
+                    CupertinoPageRoute(builder: (context) => Resultpage(audio: tmpid!, port: int.parse(_textController.text,)))
                   );
                 }
               },
@@ -158,8 +186,9 @@ Future<PlatformFile?> pickfile() async {
   }
 }
 
-Future<int?> postFile(PlatformFile file, Name name) async {
+Future<int?> postFile(PlatformFile file, Name name, int port) async {
   int? id;
+  var url = 'http://165.132.46.80:${port}/minsu/';
   debugPrint(nameString[name]);
   try {
       MultipartRequest request = MultipartRequest('POST', Uri.parse(url));
@@ -185,10 +214,10 @@ Future<int?> postFile(PlatformFile file, Name name) async {
   return id;
 }
 
-Future<bool?> downloadFile(int id) async {
+Future<bool?> downloadFile(int id, int port) async {
   bool waiting = true;
   // Uint8List? ret;
-
+  var url = 'http://165.132.46.80:${port}/minsu/';
   while(waiting){
     try {
       await Future.delayed(const Duration(seconds: 2));
